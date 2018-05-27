@@ -1,0 +1,484 @@
+﻿<Window x:Class="FileExplorer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FileExplorer"
+        xmlns:resx="clr-namespace:FileExplorer.Properties"
+        xmlns:md="http://materialdesigninxaml.net/winfx/xaml/themes"
+        mc:Ignorable="d"
+        AllowsTransparency="True"
+        Icon="icon.ico"
+        Background="Transparent"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        Foreground="White"
+        Width="1040" Height="620">
+
+    <Window.Resources>
+
+        <Style x:Key="item">
+            <Setter Property="Frame.Padding" Value="20 0 0 0"/>
+        </Style>
+
+        <Style x:Key="HeaderStyle">
+            <Setter Property="Control.Foreground" Value="#FF636363" />
+            <Setter Property="Control.FontSize" Value="12" />
+            <Setter Property="Control.VerticalAlignment" Value="Center" />
+            <Setter Property="TextBlock.Padding" Value="10 0 0 0" />
+            <Setter Property="Control.FontFamily" Value="Roboto Normal" />
+        </Style>
+
+        <Style x:Key="ListStyle">
+            <Setter Property="Control.Foreground" Value="#FF636363" />
+            <Setter Property="Control.FontSize" Value="14" />
+            <Setter Property="Control.VerticalAlignment" Value="Center" />
+            <Setter Property="Control.FontFamily" Value="Roboto Light" />
+        </Style>
+
+        <Style x:Key="DialogInfoStyle">
+            <Setter Property="Control.Foreground" Value="Black" />
+            <Setter Property="Control.FontSize" Value="14" />
+            <Setter Property="Control.Margin" Value="0 0 0 10" />
+        </Style>
+
+    </Window.Resources>
+
+    <Grid Margin="20" Background="#FFF7F7F7">
+        <Grid.Effect>
+            <DropShadowEffect
+                BlurRadius="10"
+                Direction="-90"
+                RenderingBias="Quality"
+                Opacity="0.4"
+                ShadowDepth="2"/>
+        </Grid.Effect>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="96" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--AppBar-->
+        <StackPanel Grid.Row="0" Orientation="Vertical" MouseLeftButtonDown="dragWindow">
+
+            <!--ActionBar-->
+            <Grid Height="32" Background="#FF24609E">
+                <TextBlock 
+                    Text="{x:Static resx:Resources.app_title}"
+                    FontFamily="Roboto Medium"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="16"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    
+                    <Button 
+                        Padding="10 0 10 0"
+                        Background="{x:Null}"
+                        BorderBrush="{x:Null}"
+                        Click="hideWindow"
+                        Foreground="White">
+
+                        <md:PackIcon Kind="ColorHelper"/>
+                        
+                    </Button>
+
+                    <Button 
+                        Padding="10 0 10 0"
+                        Background="{x:Null}"
+                        BorderBrush="{x:Null}"
+                        Click="closeWindow"
+                        Foreground="White">
+
+                        <md:PackIcon Width="20" Height="20" Kind="Close"/>
+
+                    </Button>
+                    
+                </StackPanel>
+            </Grid>
+
+            <!--Toolbar-->
+            <Grid Height="64" VerticalAlignment="Center" Background="#3F7EC1">
+
+                <StackPanel Margin="10 0 0 0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
+
+                    <Button 
+                        x:Name="button_back"
+                        Click="onBackClick"
+                        Background="{x:Null}"
+                        BorderBrush="{x:Null}"
+                        Foreground="White"
+                        ToolTip="Back"
+                        Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}">
+
+                        <md:PackIcon Width="30" Height="30" Kind="ArrowLeft"/>
+
+                    </Button>
+
+                    <TextBlock 
+                        x:Name="text_current_dir"
+                        Text="Computer"
+                        Margin="20 0 0 0"
+                        VerticalAlignment="Center"
+                        FontFamily="Roboto Medium"
+                        FontSize="20"/>
+                    
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+
+                    <Button 
+                        x:Name="button_copy"
+                        Visibility="Collapsed"
+                        Click="onCopyClick"
+                        Margin="0 0 10 0"
+                        Background="{x:Null}"
+                        BorderBrush="{x:Null}"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
+                        ToolTip="{x:Static resx:Resources.hint_paste}">
+
+                        <md:PackIcon Width="30" Height="30" Kind="ContentPaste"/>
+
+                    </Button>
+                    
+                    <Button 
+                        x:Name="button_new_folder"
+                        Click="onNewFolderClick"
+                        Margin="0 0 10 0"
+                        Background="{x:Null}"
+                        BorderBrush="{x:Null}"
+                        Foreground="White"
+                        Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}"
+                        ToolTip="{x:Static resx:Resources.title_edit_new_folder}">
+
+                        <md:PackIcon Width="30" Height="30" Kind="Plus"/>
+
+                    </Button>
+
+                </StackPanel>
+                
+            </Grid>
+            
+        </StackPanel>
+
+        <!--Main-->
+        <Grid Grid.Row="2">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="800"/>
+            </Grid.ColumnDefinitions>
+
+            <!--Navigation-->
+            <StackPanel Background="White" Grid.Column="0" Orientation="Vertical">
+
+                <TextBlock 
+                    Text="Places"
+                    Padding="12"
+                    Foreground="#FFB8B8B8"
+                    FontFamily="Roboto Normal"
+                    FontSize="14"/>
+
+                <ListView 
+                    x:Name="list_navigation"
+                    SelectionMode="Single" 
+                    MouseLeftButtonUp="onNavigationItemClick">
+
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+
+                            <StackPanel Orientation="Horizontal" Margin="10 0 0 0">
+                                <md:PackIcon 
+                                    Foreground="#FF747474" 
+                                    Kind="{Binding Path=icon}"
+                                    Width="25" Height="25"
+                                    VerticalAlignment="Center"/>
+                                <TextBlock
+                                    Text="{Binding Path=name}"
+                                    FontFamily="Roboto Normal" 
+                                    VerticalAlignment="Center"
+                                    Margin="20 10 0 10"/>
+                            </StackPanel>
+                            
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                    
+                </ListView>
+                
+            </StackPanel>
+
+            <Grid Grid.Column="1">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="540" />
+                    <ColumnDefinition Width="120" />
+                    <ColumnDefinition Width="140" />
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="40" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Separator VerticalAlignment="Bottom" Grid.ColumnSpan="3"/>
+
+                <!--Header-->
+                <TextBlock
+                    Text="Name"
+                    Grid.Column="0"
+                    Style="{StaticResource HeaderStyle}" />
+                <TextBlock
+                    Text="Type"
+                    Grid.Column="1"
+                    Style="{StaticResource HeaderStyle}"
+                    HorizontalAlignment="Center"/>
+                <TextBlock
+                    Text="Last modified"
+                    Grid.Column="2"
+                    Style="{StaticResource HeaderStyle}"
+                    HorizontalAlignment="Center" />
+
+                <ListView 
+                    x:Name="list_items"
+                    ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                    SelectionMode="Single"
+                    MouseDoubleClick="onListItemClick"
+                    Grid.Row="1" Grid.ColumnSpan="3">
+
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="540" />
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+
+                                    <StackPanel.ContextMenu>
+                                        <ContextMenu Width="150">
+                                            <MenuItem Header="Copy" Click="onContextCopyClick"/>
+                                            <Separator />
+                                            <MenuItem Header="Delete" Click="onContextDeleteClick"/>
+                                            <MenuItem Header="Rename" Click="onContextRenameClick"/>
+                                            <Separator />
+                                            <MenuItem Header="Properties" Click="onContextPropertiesClick"/>
+                                        </ContextMenu>
+                                    </StackPanel.ContextMenu>
+
+                                    <md:PackIcon 
+                                        Foreground="#3F7EC1" 
+                                        Kind="{Binding Path=icon}" 
+                                        Width="20" Height="20" 
+                                        VerticalAlignment="Center"/>
+
+                                    <TextBlock 
+                                        Text="{Binding Path=name}"
+                                        Style="{StaticResource ListStyle}"
+                                        Margin="20 0 0 0"
+                                        FontFamily="Roboto Normal"                        
+                                        Grid.Column="0"/>
+
+                                </StackPanel>
+
+                                <TextBlock 
+                                    Text="{Binding Path=type}"
+                                    Style="{StaticResource ListStyle}"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Center"/>
+
+                                <TextBlock 
+                                    Text="{Binding Path=modifiedTime}"
+                                    Style="{StaticResource ListStyle}"
+                                    Grid.Column="2"
+                                    HorizontalAlignment="Center"/>
+
+                            </Grid>
+                            
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                    
+                </ListView>
+                
+            </Grid>
+            
+        </Grid>
+        
+        <!--Dialog Edit Folder-->
+        <md:DialogHost x:Name="dialog_edit" Grid.RowSpan="3">
+            <md:DialogHost.DialogContent>
+                <StackPanel Width="400" Margin="20" Orientation="Vertical">
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0 0 0 20">
+
+                        <md:PackIcon 
+                            x:Name="icon_edit"
+                            Width="22" Height="22"
+                            Foreground="#3F7EC1"/>
+
+                        <TextBlock
+                            x:Name="text_edit_title"
+                            Text="{x:Static resx:Resources.title_edit_rename}"
+                            FontFamily="Roboto Normal"
+                            FontSize="18"
+                            Margin="20 0 0 0"
+                            Foreground="#3F7EC1"/>
+
+                    </StackPanel>
+                    
+                    <TextBox 
+                        x:Name="input_name"
+                        md:HintAssist.Hint="{x:Static resx:Resources.hint_new_folder}"
+                        md:HintAssist.FloatingScale="1"
+                        md:HintAssist.IsFloating="True"
+                        Margin="0 0 0 20">
+
+                    </TextBox>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+
+                        <Button
+                            Command="{x:Static md:DialogHost.CloseDialogCommand}"
+                            Style="{DynamicResource MaterialDesignFlatButton}"
+                            FontSize="12"
+                            Padding="10 5 10 5"
+                            FontFamily="Roboto Light"
+                            Content="{x:Static resx:Resources.button_cancel}" />
+
+                        <Button
+                            x:Name="button_edit_accept"
+                            Click="onEditAcceptClick"
+                            Style="{DynamicResource MaterialDesignFlatButton}"
+                            FontSize="12"
+                            Padding="10 5 10 5"
+                            FontFamily="Roboto Light"
+                            Content="{x:Static resx:Resources.button_create}" />
+
+                    </StackPanel>
+
+                </StackPanel>
+            </md:DialogHost.DialogContent>
+        </md:DialogHost>
+
+        <!--Dialog Delete File-->
+        <md:DialogHost x:Name="dialog_delete" Grid.RowSpan="3">
+            <md:DialogHost.DialogContent>
+                
+                <StackPanel
+                    Width="400" Margin="20" Orientation="Vertical">
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0 0 0 20">
+                        
+                        <md:PackIcon 
+                            Kind="Delete"
+                            Width="22" Height="22"
+                            Foreground="#3F7EC1"/>
+
+                        <TextBlock
+                            x:Name="text_delete_file_title"
+                            Text="Delete"
+                            FontFamily="Roboto Normal"
+                            FontSize="18"
+                            Margin="20 0 0 0"
+                            Foreground="#3F7EC1"/>
+
+                    </StackPanel>
+
+                    <TextBlock
+                        x:Name="text_delete_file_descr"
+                        Text="{x:Static resx:Resources.descr_delete_file}"
+                        Foreground="Black"
+                        FontSize="16"
+                        Margin="0 0 0 10"/>
+
+                    <TextBlock 
+                        x:Name="text_delete_file_info"
+                        Text="MyFolder"
+                        Style="{StaticResource DialogInfoStyle}"/>
+
+                    <StackPanel
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+
+                        <Button
+                            Command="{x:Static md:DialogHost.CloseDialogCommand}"
+                            Style="{DynamicResource MaterialDesignFlatButton}"
+                            FontSize="14"
+                            Padding="10 5 10 5"
+                            FontFamily="Roboto Light"
+                            Content="{x:Static resx:Resources.button_cancel}" />
+
+                        <Button
+                            Style="{DynamicResource MaterialDesignFlatButton}"
+                            Click="onDeleteClick"
+                            FontSize="14"
+                            Foreground="Red"
+                            Padding="10 5 10 5"
+                            FontFamily="Roboto Light"
+                            Content="{x:Static resx:Resources.button_delete}" />
+
+                    </StackPanel>
+
+                </StackPanel>
+            </md:DialogHost.DialogContent>
+        </md:DialogHost>
+
+        <!--Dialog Properties-->
+        <md:DialogHost x:Name="dialog_properties" Grid.RowSpan="3">
+            <md:DialogHost.DialogContent>
+                <StackPanel Width="500" Margin="20" Orientation="Vertical">
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0 0 0 20">
+
+                        <md:PackIcon 
+                            Kind="Animation"
+                            Width="22" Height="22"
+                            Foreground="#3F7EC1"/>
+
+                        <TextBlock
+                            Text="{x:Static resx:Resources.title_properties}"
+                            FontFamily="Roboto Normal"
+                            FontSize="18"
+                            Margin="20 0 0 0"
+                            Foreground="#3F7EC1"/>
+
+                    </StackPanel>
+
+                    <TextBlock 
+                        x:Name="text_prop_top_info"
+                        Text="Name: folder"
+                        Style="{StaticResource DialogInfoStyle}"/>
+
+                    <Separator Margin="0 0 0 10"/>
+
+                    <TextBlock 
+                        x:Name="text_prop_mid_info"
+                        Text="Location: D"
+                        Style="{StaticResource DialogInfoStyle}"/>
+
+                    <Separator Margin="0 0 0 10"/>
+
+                    <TextBlock 
+                        x:Name="text_prop_low_info"
+                        Text="Creation time: today"
+                        Style="{StaticResource DialogInfoStyle}"/>
+
+                    <Button
+                            Command="{x:Static md:DialogHost.CloseDialogCommand}"
+                            HorizontalAlignment="Right"
+                            Style="{DynamicResource MaterialDesignFlatButton}"
+                            FontSize="12"
+                            Padding="10 5 10 5"
+                            FontFamily="Roboto Light"
+                            Content="{x:Static resx:Resources.button_ok}" />
+
+                </StackPanel>
+            </md:DialogHost.DialogContent>
+        </md:DialogHost>
+
+    </Grid>
+    
+</Window>
